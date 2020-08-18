@@ -1,4 +1,8 @@
-## Hadoop篇之HDFS初体验
+---
+
+---
+
+## Hadoop篇之HDFS基础
 
 
 
@@ -64,7 +68,7 @@ NameNode的缺点：
 
 SecondaryNameNode的主要功能是对NameNode的数据snapshots进行备份，这样可以降低NameNode崩溃后导致数据丢失的风险，主要任务是从NameNode获得fsImage和edits文件，然后重新合并发给NameNode。这样既能减轻NameNode的负担有能安全备份。
 
- <img src="/Users/chengxi/Document/toBeBigDataer/img/SecondaryNameNode同步快照过程.png" alt="SecondaryNameNode同步快照过程" style="zoom:50%;" />
+<img src="../img/SecondaryNameNode同步快照过程.png" style="zoom:50%;" />
 
 - SecondaryNameNode定期做checkpoint检查点操作
 
@@ -125,7 +129,7 @@ NameNode和DataNode的关系：
 
 数据是以数据块Block的形式存储在HDFS中，每个数据块大小默认是128M。因此上传文件时文件被分割成128M的块，如果可能，每个块将驻留在不同的DataNode上。
 
-<img src="/Users/chengxi/Document/toBeBigDataer/img/hdfs-block数据存储.png" alt="hdfs-block数据存储" style="zoom:50%;" />
+<img src="../img/hdfs-block数据存储.png" alt="hdfs-block数据存储" style="zoom:50%;" />
 
 Q：如果数据块小于128M，那么存储在HDFS上占用多大内存？
 
@@ -152,7 +156,7 @@ hadoop fs -setrep -R 4 /path
 </property>
 ```
 
-<img src="/Users/chengxi/Document/toBeBigDataer/img/hdfs-block数据副本示意图.png" alt="hdfs-block数据副本示意图" style="zoom:50%;" />
+<img src="../img/hdfs-block数据副本示意图.png" alt="hdfs-block数据副本示意图" style="zoom:50%;" />
 
 当客户端将数据写入复制因子为3的HDFS文件时，NameNode使用复制目标选择算法检索数据节点列表。此列表包含将承载该块副本的DataNode。然后，客户端写入第一个DataNode。第一个DataNode将每个部分写入其本地存储库，并将该部分传输到列表中的第二个DataNode。第二个DataNode依次开始接收数据块的每个部分，将该部分写入其存储库，然后将该部分复制到第三个DataNode。最后，第三个DataNode将数据写入其本地存储库。
 
