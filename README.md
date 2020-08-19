@@ -3,7 +3,25 @@
 
 ## Java 篇
 
+### Java基础篇
 
+1、[反射之Class类](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/Java%20%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/Java%20%E5%8F%8D%E5%B0%84%E4%B9%8BClass%E7%B1%BB.md)（待完善java.lang.reflect.*类）
+
+2、[Java——动态代理](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/Java%20%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/Java%E2%80%94%E2%80%94%E5%8A%A8%E6%80%81%E4%BB%A3%E7%90%86.md)（待完善）
+
+3、[Java——注解](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/Java%20%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/Java%E2%80%94%E2%80%94%E6%B3%A8%E8%A7%A3.md)（待完善Spring注解、注解与反射）
+
+4、[Java IO模型应用篇](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/Java%20%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/Java%E2%80%94%E2%80%94%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3IO%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86.md)（待完善IO部分）
+
+### 多线程篇
+
+
+
+### JVM篇
+
+1、[JVM——认识类文件结构](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/JVM%E7%B3%BB%E5%88%97/%E7%B1%BB%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84.md)（待完善）
+
+2、[理解类加载机制](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/JVM%E7%B3%BB%E5%88%97/%E7%90%86%E8%A7%A3JVM%E2%80%94%E2%80%94%E8%99%9A%E6%8B%9F%E6%9C%BA%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6.md)（待完善）
 
 ## 环境安装篇
 
