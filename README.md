@@ -13,6 +13,12 @@
 
 4、[Java IO模型应用篇](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/Java%20%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/Java%E2%80%94%E2%80%94%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3IO%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86.md)（待完善IO部分）
 
+### 集合篇
+
+[1、Java集合系列——ArrayList](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/Java%20%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/Java%E9%9B%86%E5%90%88%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94ArrayList.md)
+
+2、[Java集合系列——LinkedList](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/Java%20%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/Java%E9%9B%86%E5%90%88%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94LinkedList.md)（TODO）
+
 ### 多线程篇
 
 
