@@ -102,4 +102,4 @@ DataStreamSource<OUT> fromParallelCollection(SplittableIterator<OUT> iterator, T
 
 
 
-### 3、DataSink数据输出
+### 3、DataSink数据输出[=]
