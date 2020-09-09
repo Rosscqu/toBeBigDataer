@@ -37,7 +37,7 @@
 
 1、[Hadoop篇——Hadoop生态介绍（待完成）](https://github.com/Rosscqu/toBeBigDataer/blob/master/3%E3%80%81Hadoop%E7%AF%87/%E8%AE%A4%E8%AF%86Hadoop.md)
 
-2、[Hadoop篇——HDFS基础](https://github.com/Rosscqu/toBeBigDataer/blob/master/3%E3%80%81Hadoop%E7%AF%87/Hadoop%E7%AF%87%E2%80%94%E2%80%94HDFS%E5%88%9D%E4%BD%93%E9%AA%8C.md)
+2、[Hadoop篇——HDFS基础](https://github.com/Rosscqu/toBeBigDataer/blob/master/3%E3%80%81Hadoop%E7%AF%87/Hadoop%E7%AF%87%E2%80%94%E2%80%94HDFS%E5%8E%9F%E7%90%86.md)
 
 3、[Hadoop篇——HDFS原理（待完成）](https://github.com/Rosscqu/toBeBigDataer/blob/master/3%E3%80%81Hadoop%E7%AF%87/Hadoop%E7%AF%87%E2%80%94%E2%80%94HDFS%E5%8E%9F%E7%90%86.md)
 
