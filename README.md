@@ -17,7 +17,9 @@
 
 [1、Java集合系列——ArrayList](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/Java%20%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/Java%E9%9B%86%E5%90%88%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94ArrayList.md)
 
-2、[Java集合系列——LinkedList](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/Java%20%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/Java%E9%9B%86%E5%90%88%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94LinkedList.md)（TODO）
+2、[Java集合系列——LinkedList](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/Java%20%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/Java%E9%9B%86%E5%90%88%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94LinkedList.md)
+
+3、[Java集合系列——HashMap](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/Java%20%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/Java%E9%9B%86%E5%90%88%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94HashMap.md)(TODO)
 
 ### 多线程篇
 
@@ -39,7 +41,7 @@
 
 2、[Hadoop篇——HDFS基础](https://github.com/Rosscqu/toBeBigDataer/blob/master/3%E3%80%81Hadoop%E7%AF%87/Hadoop%E7%AF%87%E2%80%94%E2%80%94HDFS%E5%9F%BA%E7%A1%80.md)
 
-3、[Hadoop篇——HDFS原理（待完成）](https://github.com/Rosscqu/toBeBigDataer/blob/master/3%E3%80%81Hadoop%E7%AF%87/Hadoop%E7%AF%87%E2%80%94%E2%80%94HDFS%E5%8E%9F%E7%90%86.md)
+3、[Hadoop篇——深入剖析HDFS文件读取与写入（TODO）](https://github.com/Rosscqu/toBeBigDataer/blob/master/3%E3%80%81Hadoop%E7%AF%87/Hadoop%E7%AF%87%E2%80%94%E2%80%94%E6%B7%B1%E5%85%A5%E5%89%96%E6%9E%90HDFS%E6%96%87%E4%BB%B6%E8%AF%BB%E5%8F%96%E4%B8%8E%E5%86%99%E5%85%A5.md)
 
 ## Yarn篇
 
