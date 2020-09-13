@@ -26,8 +26,7 @@ HDFS中名称节点、数据节点和客户端之间主要有2种主要的通信
 - Block:数据块基础信息
 - ExtendedBlock:数据块池中唯一标识块
 - LocatedBlock:已经确认位置的数据块
-- LocatedBlocks：用于一次定位多个数据块，包含一系列的LocatedBlock对象
-- LocatedBlocks：数据块集合，包括块的位置和长度；
+- LocatedBlocks：数据块集合，包括块的位置和长度，用于一次定位多个数据块，包含一系列的LocatedBlock对象
 
 2）数据节点相关
 
