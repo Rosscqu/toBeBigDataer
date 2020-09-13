@@ -19,7 +19,9 @@
 
 2、[Java集合系列——LinkedList](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/Java%20%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/Java%E9%9B%86%E5%90%88%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94LinkedList.md)
 
-3、[Java集合系列——HashMap](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/Java%20%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/Java%E9%9B%86%E5%90%88%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94HashMap.md)(TODO)
+3、[java集合系列——Hashmap中红黑树实现原理](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/Java%20%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/%E7%BA%A2%E9%BB%91%E6%A0%91%E7%9A%84%E5%AE%9E%E7%8E%B0%E2%80%94%E2%80%94%E5%9F%BA%E4%BA%8EJDK1.8%20HashMap.md)
+
+4、[Java集合系列——HashMap](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/Java%20%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/Java%E9%9B%86%E5%90%88%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94HashMap.md)(TODO)
 
 ### 多线程篇
 
