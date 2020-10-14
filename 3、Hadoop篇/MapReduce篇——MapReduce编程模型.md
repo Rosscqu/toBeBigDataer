@@ -164,7 +164,9 @@ public class WordCountMain {
 3. 设置map、combiner、reduce算子，其中Mapper和Reducer类需要自定义，combiner类一般与Reducer类相同；
 4. 提交任务
 
-在上面的案例中还没有提到Partitioner类，该类主要用于map阶段到reduce阶段，也就是第一张图中的shuffle。总结来说，MapReduce编程模型共提供了5个可编程组件：
+### 4、MapReduce编程组件
+
+在上面的案例中还没有提到Partitioner类，该类主要用于map阶段到reduce阶段，也就是第一张图中的shuffle。MapReduce编程模型共提供了5个可编程组件：
 
 - InputFormat
 - Mapper
@@ -174,35 +176,89 @@ public class WordCountMain {
 
 下面分别介绍各个编程组件。
 
-### 4、自定义编程组件
+#### 4.1 InputFormat类
+
+InputFormat的主要用于描述输入数据的格式，主要用于:
+
+- 数据切分：按某个策略将输入数据切分成若干个split，以便确定Map Task个数以及对应的split；
+- 为Mapper提供输入数据：给定某个split，能将其解析成一个个key/value对。
+
+<img src="img/mapreduce——inputformat详细图.png" alt="image-20200918212337445" style="zoom:50%;" />
+
+InputForMat类具有两个方法：getSplits()和createRecordReader()，具体类图如下：
+
+<img src="../../../Library/Application Support/typora-user-images/image-20200916233905124.png" alt="image-20200916233905124" style="zoom:50%;" />
+
+1）getSplits()方法
+
+功能：主要完成数据切分功能，得到InputSplit集合，其中InputSplit的特点：
+
+- 逻辑分片：只是在逻辑上对输入数据进行分片，InputSplit只记录分片的元数据信息，比如起始位置、长度、所在的结点列表等；
+- 可序列化：作用提交到JobTracker之前，Client会调用InputFormat的getSplits函数，并将得到的InputSplit序列化到文件中。这样当作业提交到JobTracker端对作业初始化时，可直接读取该文件，解析出所有InputSplit，并创建map任务。
+
+2）createRecordReader()方法
+
+功能：将输入的InputSplit解析成若干个Key/value对。MapReduce框架在执行map任务时会不断调用RecordReader对象的方法，迭代获取key/value对并交给map()方法处理。
+
+##### 4.1.1 详解FileInputFormat类
+
+所有基于文件的InputFormat实现的基类是FileInputFormat，并由此派生针对文本文件格式的TextInputFormat、KeyValueTextInputFormat和NLineInputFormat，针对二进制文件的SequenceFileInputFormat等。
+
+**FileInputFormat体系的设计思路**：由公共基类FileInputFormat采用统一的方法对各种输入文件进行切分，而由各个派生InputFormat自己提供机制进一步解析InputSplit。即FileInputFormat类提供公共的getSplits()方法，该方法最核心的两个算法是**文件切分算法**和**host选择算法。**
+
+1）文件切分算法
+
+目的：确定InputSplit的个数以及每个InputSplit对应的数据段
+
+文件切分的源码为：
+
+```java
+protected long computeSplitSize(long blockSize, long minSize,
+                                long maxSize) {
+  return Math.max(minSize, Math.min(maxSize, blockSize));
+}
+```
+
+其中minSize为`mapreduce.input.fileinputformat.split.minsize`，maxSize为`mapreduce.input.fileinputformat.split.maxsize`。从切分的算法看出，切分的大小是blockSize。
+
+2）host选择算法
+
+采用启发式算法：首先按照rack包含的数据量对rack进行排序，然后在rack内部按照每个node包含的数据量对node排序，最后取前N个node对host作为InputSplit对host列表，这里的N为block副本数。
+
+##### 4.1.2 如何自定义InputFormat类
+
+InputFormat类是抽象类，其实现方式有多个，例如FileInputFormat、DBInputFormat等，这些类实现了getSplits()、createRecordReader()其中的一个或多个方法。自定义InputFormat类必须包括：
+
+- getSplits()方法
+- createRecordReader()方法
+
+如果有必要可以实现类：
+
+- InputSplit类
+- RecordReader类
+- Key类
+
+##### 
+
+#### 4.2 Mapper类
 
 
 
-#### 4.1 自定义Inputformat类
+
+
+#### 4.3 Partitioner——shuffle
 
 
 
 
 
-#### 4.2 自定义Mapper类
+#### 4.4 Reducer
 
 
 
 
 
-#### 4.3 自定义Partitioner——shuffle
-
-
-
-
-
-#### 4.4 自定义Reducer
-
-
-
-
-
-#### 4.5 自定义OutputFormat类
+#### 4.5 OutputFormat类
 
 
 
