@@ -39,6 +39,8 @@
 
 2、[安装hive客户端（本地模式）](https://github.com/Rosscqu/toBeBigDataer/blob/master/2%E3%80%81%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E7%AF%87/Hive%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B%EF%BC%88centos%E7%89%88%EF%BC%89.md)
 
+3、[安装Zookeeper集群](https://github.com/Rosscqu/toBeBigDataer/blob/master/2%E3%80%81%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E7%AF%87/zookeeper-3.4.5-cdh5.14.2%E5%AE%89%E8%A3%85%E9%83%A8%E7%BD%B2.md)
+
 ## Hadoop生态篇
 
 1、[Hadoop篇——Hadoop生态介绍（待完成）](https://github.com/Rosscqu/toBeBigDataer/blob/master/3%E3%80%81Hadoop%E7%AF%87/%E8%AE%A4%E8%AF%86Hadoop.md)
