@@ -1,4 +1,6 @@
-## 一篇搞懂YARN、MapReduce on YARN、Spark on YARN的运行原理
+## 一文搞懂YARN、MapReduce on YARN、Spark on YARN的运行原理
+
+[TOC]
 
 YARN是Hadoop集群的资源管理系统，是Hadoop生态中非常重要的成员项目。
 
@@ -130,10 +132,72 @@ Application在YARN提交过程主要有3步：
 
 通过上一节大概了解YARN的运行原理。下面介绍在YARN上如何运行MapReduce应用程序。
 
+<img src="img/MapReduce on yarn运行图.png" alt="image-20201024220259588" style="zoom:50%;" />
 
+0）将应用程序打成jar包，在客户端运行hadoop jar命令，提交job到集群中
 
+1）调用job的submit()方法，然后该方法调用JobSubmitter的submitJobInternal()方法：
 
+- 检查输入和输出格式；
+- 计算job的分片数；
+- 设置job的必要信息；
+- 该方法内部获取jobId:`submitClient.getNewJobID()`
 
+2）将jobId、HDFS路径返回给客户端；
 
+3）将作业的分片信息、配置信息、jar包等资源上传到HDFS上，jar包默认副本为10，Map或Reduce任务从这些副本中读取；
+
+4）向ResourceManager申请MRAppMaster；
+
+5）RM生成Task，并通知Scheduler；
+
+6）RM与NM通信，调度器分配Container;
+
+7）NM接收到RM的指令后，创建占据特定资源的Container，然后在Container中运行MRAppMaster；
+
+8）MRAppMaster需要记录多个Container的状态、进度等信息，所以需要创建多个簿记对象记录这些信息；
+
+9）从HDFS获取Client计算出的分片数：
+
+- 每个分片split创建一个map任务；
+- 通过mapreduce.job.reduces指定reduce任务的个数
+
+10）若需要额外的Container，MRAppMaster向RM申请Container:
+
+- 优先为申请map的Container，因为Reduce任务执行是所有的map任务必须执行完；
+- 5%的map任务执行完，才会申请reduce的Container；
+- 为map申请Container时尽量遵循数据本地化原则，因为移动计算比移动数据效率更高；
+- reduce任务可以在任意节点；
+- 默认情况下，为每个Task分配1Core、1G的Container，配置参数分别为：mapreduce.map.memory.mb、mapreduce.map.cpu.vcore、mapreduce.reduce.memory.mb、mapreduce.reduce.cpu.vcore
+
+如果是小作业，appMaster会以uberize方式运行作业，即不申请额外的Container，直接在MRAppMaster中运行作业。
+
+- 小作业判断的标准：小于10个map任务；只有1个reduce任务；输入小于HDFS块大小；
+- 开启uber模式：mapduce.job.ubertask.enable=true
+
+11）RM与NM通信，调度器分配Container；
+
+12）MRAppMaster发送程序和脚本到NM中；
+
+13）NM启动一个占据指定资源的Container，容器中运行YarnChild；
+
+14）YarnChild从HDFS中拉取，例如作业的Jar包、配置信息、分布式缓存等；
+
+15）YarnChild负责运行Map Task或Reduce Task;
+
+16）任务执行完后，MRAppMaster向RM注销.
+
+简单来说，YARN的生命周期为：申请资源-->申请运行任务的Container-->分发Task-->运行Task-->Task运行结束-->回收资源。
 
 ### 4、Spark on YARN的运行原理
+
+Spark on Yarn模式是将Spark任务资源的分配交给ResourceManager。Spark根据Driver分布的不同，分为Spark-client、Spark-cluster两种模式。下面分别介绍这两种模式。
+
+#### 4.1 Spark-client模式
+
+
+
+
+
+#### 4.2 Spark-cluster模式
+
