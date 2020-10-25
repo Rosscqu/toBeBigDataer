@@ -195,9 +195,17 @@ Spark on Yarn模式是将Spark任务资源的分配交给ResourceManager。Spark
 
 #### 4.1 Spark-client模式
 
-
+<img src="img/Spark-client运行图.png" alt="image-20201025120144895" style="zoom:50%;" />
 
 
 
 #### 4.2 Spark-cluster模式
 
+<img src="img/Spark-cluster运行图.png" alt="image-20201025120232735" style="zoom:50%;" />
+
+
+
+Spark-client模式与Spark-cluster模式的区别：
+
+- Spark-client：application运行在提交任务的客户端，应用程序结果可以显示；同时程序中打印的日志也可以在客户端显示；常用于调试时；
+- Spark-cluster：application运行在YARN集群中，运行在ApplicationMaster进程中，其运行结果不能在客户端显示。
