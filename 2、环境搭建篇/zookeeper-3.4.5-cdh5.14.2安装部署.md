@@ -115,7 +115,7 @@ source /etc/profile
 - 三台机器启动zookeeper服务；这个命令三台机器都要执行
 
 ```shell
-zkServer.sh start
+./zkServer.sh start
 ```
 
 -  查看启动状态
