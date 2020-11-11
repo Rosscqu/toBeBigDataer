@@ -53,17 +53,21 @@
         delete.topic.enable=true
         #指定broker主机名
         host.name=node01
+        listeners=PLAINTEXT://:9092
+        advertised.listeners=PLAINTEXT://node1:9092
         ```
-
+      
+      
+      
     - 配置kafka环境变量
-
+    
       - vi /etc/profile
-
+    
         ```
         export KAFKA_HOME=/ross/install/kafka
         export PATH=$PATH:$KAFKA_HOME/bin
         ```
-
+  
 - 6、分发kafka安装目录到其他节点
 
   ```
@@ -90,12 +94,18 @@
       delete.topic.enable=true
       #指定broker主机名
       host.name=node02
+      listeners=PLAINTEXT://:9092
+      advertised.listeners=PLAINTEXT://node2:9092
       ```
-
+    
+     
+    
+  
+    
   - node03
-
+  
     - vi server.properties
-
+  
       ```shell
       #指定kafka对应的broker id ，唯一
       broker.id=2
@@ -107,7 +117,14 @@
       delete.topic.enable=true
       #指定broker主机名
       host.name=node03
+      listeners=PLAINTEXT://:9092
+      # Hostname and port the broker will advertise to producers and consumers. If not set,
+      # it uses the value for "listeners" if configured.  Otherwise, it will use the value
+      # returned from java.net.InetAddress.getCanonicalHostName().
+      advertised.listeners=PLAINTEXT://node3:9092
       ```
+
+配置listeners和advertised.listeners可以远程访问Kafka。
 
 ### 2. kafka集群启动和停止
 
@@ -157,3 +174,43 @@
       echo "$host kafka is stopping"
     done
     ```
+
+#### 2.3 一键启动和停止脚本
+
+* kafkaCluster.sh 
+
+  ~~~shell
+  #!/bin/sh
+  case $1 in 
+  "start"){
+  for host in node01 node02 node03 
+  do
+    ssh $host "source /etc/profile; nohup /ross/install/kafka/bin/kafka-server-start.sh/kkb/install/kafka/config/server.properties > /dev/null 2>&1 &"   
+    echo "$host kafka is running..."  
+  done
+  };;
+  
+  "stop"){
+  for host in node01 node02 node03 
+  do
+    ssh $host "source /etc/profile; nohup /ross/install/kafka/bin/kafka-server-stop.sh >/dev/null  2>&1 &"   
+    echo "$host kafka is stopping..."  
+  done
+  };;
+  esac
+  ~~~
+
+* 启动
+
+  ~~~shell
+  sh kafkaCluster.sh start
+  ~~~
+
+* 停止
+
+  ~~~shell
+  sh kafkaCluster.sh stop
+  ~~~
+
+
+### 
