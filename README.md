@@ -45,11 +45,11 @@
 
 ## Hadoop生态篇
 
-1、[Hadoop篇——Hadoop生态介绍（待完成）](https://github.com/Rosscqu/toBeBigDataer/blob/master/3%E3%80%81Hadoop%E7%AF%87/%E8%AE%A4%E8%AF%86Hadoop.md)
+1、[Hadoop篇——Hadoop架构](https://github.com/Rosscqu/toBeBigDataer/blob/master/3%E3%80%81Hadoop%E7%AF%87/%E8%AE%A4%E8%AF%86Hadoop.md)
 
 2、[Hadoop篇——HDFS基础](https://github.com/Rosscqu/toBeBigDataer/blob/master/3%E3%80%81Hadoop%E7%AF%87/Hadoop%E7%AF%87%E2%80%94%E2%80%94HDFS%E5%9F%BA%E7%A1%80.md)
 
-3、[Hadoop篇——深入剖析HDFS文件读取与写入（TODOING）](https://github.com/Rosscqu/toBeBigDataer/blob/master/3%E3%80%81Hadoop%E7%AF%87/Hadoop%E7%AF%87%E2%80%94%E2%80%94%E6%B7%B1%E5%85%A5%E5%89%96%E6%9E%90HDFS%E6%96%87%E4%BB%B6%E8%AF%BB%E5%8F%96%E4%B8%8E%E5%86%99%E5%85%A5.md)
+3、[Hadoop篇——深入剖析HDFS文件读取与写入](https://github.com/Rosscqu/toBeBigDataer/blob/master/3%E3%80%81Hadoop%E7%AF%87/Hadoop%E7%AF%87%E2%80%94%E2%80%94%E6%B7%B1%E5%85%A5%E5%89%96%E6%9E%90HDFS%E6%96%87%E4%BB%B6%E8%AF%BB%E5%8F%96%E4%B8%8E%E5%86%99%E5%85%A5.md)
 
 4、[MapReduce篇——编程模型(TODOING)](https://github.com/Rosscqu/toBeBigDataer/blob/master/3%E3%80%81Hadoop%E7%AF%87/MapReduce%E7%AF%87%E2%80%94%E2%80%94MapReduce%E7%BC%96%E7%A8%8B%E6%A8%A1%E5%9E%8B.md)
 

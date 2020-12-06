@@ -41,7 +41,7 @@ HDFS中名称节点、数据节点和客户端之间主要有2种主要的通信
 
 ### 2、客户端到名称节点的文件与目录操作
 
-客户端到名称节点有大量元数据操作，例如更改文件名(rename)、在给定目录下创建一个字目录(mkdir)等，这些操作一般只涉及客户端和名称节点的交互，通过远程接口CLientProtocol进行。
+客户端到名称节点有大量元数据操作，例如更改文件名(rename)、在给定目录下创建一个字目录(mkdir)等，这些操作一般只涉及客户端和名称节点的交互，通过远程接口ClientProtocol进行。
 
 创建子目录的示例如下：
 
@@ -91,3 +91,36 @@ Q：客户端直接联系名称节点，检索数据存放位置，并有名称�
 A：1）能够将读取文件引起的数据传输分散到集群到各个数据节点，HDFS可以支持大量的并发客户端；2）名称节点只处理数据块定位请求，不提供数据，可以避免名称节点成为系统的瓶颈。
 
 ### 4、客户端写文件
+
+下图显示HDFS写文件时流程图：
+
+<img src="img/Hadoop写文件流程图.png" alt="image-20201206113932544" style="zoom:50%;" />
+
+整个写文件的流程为：
+
+1、创建文件
+
+2、建立数据流管道
+
+3、向数据流管道pipline写分块数据
+
+4、packet写满后写入dataQuene
+
+5、packet数据取完后写入ackQuene
+
+6、Datanode之间同步完数据后返回ack，如果ack是success，则删除dataQuene的packet，否则将packet重新放入dataQuene的队首；
+
+7、文件写完后发送空的packet，关闭pipeline；
+
+8、clientProtocol.complete()方法通知NameNode当前数据已经写完。
+
+
+
+Q：在写的过程中，pipeline中的datanode出现故障（如网络不通），输出流如何恢复
+
+- 输出流中ackQueue缓存的所有packet会被重新加入dataQueue；
+- 输出流调用ClientProtocol.updateBlockForPipeline()，为block申请一个新的时间戳，namenode会记录新时间戳，确保故障datanode即使恢复，但由于其上的block时间戳与namenode记录的新的时间戳不一致，故障datanode上的block进而被删除
+- 输出流调用ClientProtocol.getAdditionalDatanode()通知namenode分配新的datanode到数据流pipeline中，并使用新的时间戳建立pipeline
+- 新添加到pipeline中的datanode，目前还没有存储这个新的block，HDFS客户端通过DataTransferProtocol通知pipeline中的一个datanode复制这个block到新的datanode中
+- pipeline重建后，输出流调用ClientProtocol.updatePipeline()，更新namenode中的元数据
+- 故障恢复完毕，完成后续的写入流程
