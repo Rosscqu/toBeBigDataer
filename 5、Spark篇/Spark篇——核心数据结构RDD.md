@@ -246,9 +246,91 @@ public class CheckpointJob {
 
 #### 2.5 RDD的数据共享机制
 
+RDD的数据共享有两种：广播变量和累加器。
+
+##### 2.5.1 广播变量
+
+广播变量是在每个Executor上保存一个只读副本，避免每个task都保存一个副本。这样的好处是减少内存的使用，例如现在有5个Executor，每个Executor运行10个task，现在需要的共享数据大小为100M，如果不使用共享变量需要5 * 10 * 100M共5G内存，如果使用广播变量，那么只需要5 * 100M的内存。
+
+广播变量的使用方式：
+
+```java
+public static void main(String[] args) {
+    SparkConf conf = new SparkConf().setMaster("local[2]").setAppName("broadcast example");
+    JavaSparkContext sc = new JavaSparkContext(conf);
+    Broadcast<String> broadcast = sc.broadcast("broadcast");
+
+    List<String> list = Arrays.asList("a", "b", "c");
+    JavaRDD<String> source = sc.parallelize(list);
+
+    JavaRDD<String> mapRdd = source.map((s) -> {
+        return s.concat(broadcast.getValue());
+    });
+
+    System.out.println(mapRdd.collect());
+}
+```
+
+使用广播变量需要注意：
+
+1）广播变量不能为RDD；
+
+2）广播变量只能在Driver端定义，不能在Executor定义；
+
+3）只能在Driver端修改广播变量的值；
+
+##### 2.5.2 累加器
+
+累加器的作用是统计某些事件的全局计数，一般用于程序调试。
+
+累加的使用方式：
+
+```java
+public static void main(String[] args) {
+    SparkConf conf = new SparkConf().setMaster("local[*]").setAppName("accumulator example");
+    JavaSparkContext sc = new JavaSparkContext(conf);
+
+    Accumulator<Integer> accumulator = sc.accumulator(0);
+
+    List<String> list = Arrays.asList("a", "b", "c");
+    JavaRDD<String> source = sc.parallelize(list);
+
+    JavaRDD<String> mapRdd = source.map((s) -> {
+        accumulator.add(1);
+       return s;
+    });
+
+    // 必须触发计算，累加器才会计数
+    mapRdd.count();
+    System.out.println(accumulator.value());
+}
+```
+
 
 
 #### 2.6 RDD序列化
+
+**1）为什么需要序列化？**
+
+Spark的计算是在Executor上进行的，map、foreach等转换算子的步骤：
+
+- 在Driver端本地序列化；
+- 对象序列化传输到executor上；
+- executor进行反序列化；
+- 最终节点上运行
+
+从Driver传输数据到Executor端，需要对数据进行序列化。在实际应用中，也经常因为对象没有序列化而报错。
+
+**2）序列化的场景**
+
+在map、foreach等算子内部使用到外部定义的变量或函数。
+
+**3）解决序列化方案**
+
+- 对自定义的类进行序列化，实现Serializable接口；
+- 对不能序列化的对象使用@transient注解；
+- 直接将对象放在函数中，避免序列化；
+- 将传输的对象放在class中
 
 
 
@@ -360,19 +442,115 @@ Spark生成RDD间的依赖关系后，同时这个计算链也就生成了逻辑
 
 DAG之间的依赖关系包含RDD由哪些Parent RDD转换而来和它依赖Parent RDD的哪些Partition，这是DAG的重要属性。借助这些依赖关系，DAG可以认为这些RDD之间形成了Lineage（血统）。
 
-Lineage在Spark中具有重要作用，不仅借能保证一个RDD计算前，它所依赖的parent RDD都已经完成计算；而且实现RDD的容错性，如果一个RDD的部分或全部计算结果丢失，那么只需要重新计算这部饿呜呜呜呜呜-=分丢失的数据，不需要全量的重新计算。
+Lineage在Spark中具有重要作用，不仅借能保证一个RDD计算前，它所依赖的parent RDD都已经完成计算；而且实现RDD的容错性，如果一个RDD的部分或全部计算结果丢失，那么只需要重新计算这部分丢失的数据，不需要全量的重新计算。
+
+RDD的Lineage在逻辑上就是有向无环图（DAG）。
+
+#### 4.2 stage划分
+
+首先为什么要划分stage？因为Spark是根据DAG来生成计算任务的，而计算任务的划分是根据stage划分的。
+
+stage的划分由依赖关系决定。对于窄依赖，由于Partition依赖关系是确定的，Partition的转换处理可以在一个线程中完成，所以窄依赖被Spark划分到同一个执行阶段；而对于宽依赖，由于shuffle的存在，只能在parent RDD的shuffle处理完成后才能开始计算，因此宽依赖是划分stage的依据。
+
+task数由stage的partition决定。stage表示调度的不同阶段，每个stage对应一个taskset，而每个Partition对应一个task，这些task是可以并行计算的。
+
+task的类型由stage的类型决定。stage有两种类型：shuffleMapStage和ResultStage。shuffle之前的所有转换被划分为shuffleMapStage，对应的task类型是shuffleMapTask；而shuffle之后的stage就是resultStage，对应的task类型是resultTask。
 
 
 
-#### 4.2 DAG有向无环图生成
+#### 4.3 Task执行
+
+Task的执行由org.apache.spark.scheduler.Task的run方法开始调用，具体调用图如下：
+
+<img src="img/task执行uml图.png" alt="image-20201217215042624" style="zoom:50%;" />
+
+真正任务执行是在RDD类中iterator()方法执行，其源码为：
+
+```java
+final def iterator(split: Partition, context: TaskContext): Iterator[T] = {
+  if (storageLevel != StorageLevel.NONE) {
+    // 如果存储级别不是None，那么先检查是否有缓存；没有则要进行计算
+    getOrCompute(split, context)
+  } else {
+    // 如果有checkpoint，那么直接读取结果；否则直接进行计算
+    computeOrReadCheckpoint(split, context)
+  }
+}
+```
 
 
 
-#### 4.3 stage划分
+**1）存储级别不为NONE**
+
+当存储级别不为NONE时，会先检查是否有缓存，如果没有会调用computeOrReadCheckpoint()方法进行计算。
+
+```java
+private[spark] def getOrCompute(partition: Partition, context: TaskContext): Iterator[T] = {
+  // blockId格式：rdd_{id}_{partition.index}
+  val blockId = RDDBlockId(id, partition.index)
+  var readCachedBlock = true
+  // This method is called on executors, so we need call SparkEnv.get instead of sc.env.
+  // 调用executor，blockManager提供Storage模块与其他模块交互的接口
+  // getOrElseUpdate方法：若block被缓存则返回，否则返回一个迭代器代表该RDD需要计算
+  SparkEnv.get.blockManager.getOrElseUpdate(blockId, storageLevel, elementClassTag, () => {
+    readCachedBlock = false
+    // 查询checkpoint是否有数据，如果有则直接读取，否则调用compute()方法计算
+    computeOrReadCheckpoint(partition, context)
+  }) match {
+      // 当缓存命中时
+    case Left(blockResult) =>
+      if (readCachedBlock) {
+        // 更新统计信息，将缓存作为结果返回
+        val existingMetrics = context.taskMetrics().inputMetrics
+        existingMetrics.incBytesRead(blockResult.bytes)
+        new InterruptibleIterator[T](context, blockResult.data.asInstanceOf[Iterator[T]]) {
+          override def next(): T = {
+            existingMetrics.incRecordsRead(1)
+            delegate.next()
+          }
+        }
+      } else {
+        new InterruptibleIterator(context, blockResult.data.asInstanceOf[Iterator[T]])
+      }
+      // iter有数据时，任务终止
+    case Right(iter) =>
+      new InterruptibleIterator(context, iter.asInstanceOf[Iterator[T]])
+  }
+}
+```
+
+整个代码逻辑：
+
+1）BlockManager发起请求，根据blockId查询是否有缓存信息；
+
+2）如果能够获取Block的信息会直接返回Block信息；
+
+3）否则代表该RDD是可计算的，这时会调用computeOrReadCheckpoint()方法，查询是否有checkpoint，如果有则直接读取，否则调用compute()方法进行计算。
 
 
 
+**2）存储级别为NONE**
 
+当存储级别为NONE时，会首先检查当前RDD是否被checkpoint过，如果有读取checkpoint数据（checkpoint原理见2.4节）；否则开始计算。
 
+```java
+  private[spark] def computeOrReadCheckpoint(split: Partition, context: TaskContext): Iterator[T] =
+  {
+    if (isCheckpointedAndMaterialized) {
+      // 如果被checkpoint，则会被清除Lineage，firstParent就是CheckpointRDD
+      firstParent[T].iterator(split, context)
+    } else {
+      compute(split, context)
+    }
+  }
+```
 
+从源码中可以看出，如果有checkpoint，那么最终会调用CheckpointRDD的iterator，然后调用它的compute()方法。
+
+```java
+override def compute(split: Partition, context: TaskContext): Iterator[T] = {
+  val file = new Path(checkpointPath, ReliableCheckpointRDD.checkpointFileName(split.index))
+  ReliableCheckpointRDD.readCheckpointFile(file, broadcastedConf, context)
+}
+```
 
