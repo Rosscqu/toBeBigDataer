@@ -51,7 +51,7 @@ Hadoop的容错机制有：
 
 **5）文件删除**
 
-- 文件删除后会放在/trash目录下，只有查过设置的时间才会真正的删除；
+- 文件删除后会放在/trash目录下，只有超过设置的时间才会真正的删除；
 
 虽然HDFS已经有很多容错机制保证系统的可靠性，但是当NameNode发生单点故障时，依然会存在部分元数据丢失，并且会产生停机，停机这段时间系统是不可用的。所以需要更高可用的架构来保证系统的可靠性。
 
@@ -61,7 +61,7 @@ HDFS2.x采用了Hadoop HA的架构，具体架构如下：
 
 <img src="img/Hadoop HA架构.png" alt="image-20201206165129261" style="zoom:50%;" />
 
-Hadoop HA架构增加了NameNode standby节点，该节点的作用是作为NameNode的热备，实时同步NameNode的元数据；当NameNode发生故障时，zookeeper会检测到故障，并通知standby节点切换成active对外提供服务。、
+Hadoop HA架构增加了NameNode standby节点，该节点的作用是作为NameNode的热备，实时同步NameNode的元数据；当NameNode发生故障时，zookeeper会检测到故障，并通知standby节点切换成active对外提供服务。
 
 standby节点是如何热备份元数据？
 
