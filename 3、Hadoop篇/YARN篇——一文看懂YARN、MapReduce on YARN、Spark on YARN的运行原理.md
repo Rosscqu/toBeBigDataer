@@ -209,3 +209,4 @@ Spark-client模式与Spark-cluster模式的区别：
 
 - Spark-client：application运行在提交任务的客户端，应用程序结果可以显示；同时程序中打印的日志也可以在客户端显示；常用于调试时；
 - Spark-cluster：application运行在YARN集群中，运行在ApplicationMaster进程中，其运行结果不能在客户端显示。
+
