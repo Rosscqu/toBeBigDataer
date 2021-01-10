@@ -31,7 +31,11 @@
 
 1、[JVM——认识类文件结构](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/JVM%E7%B3%BB%E5%88%97/%E7%B1%BB%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84.md)（待完善）
 
-2、[理解类加载机制](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/JVM%E7%B3%BB%E5%88%97/%E7%90%86%E8%A7%A3JVM%E2%80%94%E2%80%94%E8%99%9A%E6%8B%9F%E6%9C%BA%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6.md)（待完善）
+2、[理解类加载机制](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/JVM%E7%B3%BB%E5%88%97/%E7%90%86%E8%A7%A3JVM%E2%80%94%E2%80%94%E8%99%9A%E6%8B%9F%E6%9C%BA%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6.md)
+
+3、[JVM篇——字节码、类加载器和JVM内存模型](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/JVM%E7%B3%BB%E5%88%97/JVM%E7%AF%87%E2%80%94%E2%80%94%E5%AD%97%E8%8A%82%E7%A0%81%E3%80%81%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8.md)
+
+4、[JVM篇——JVM启动参数与调优](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/JVM%E7%B3%BB%E5%88%97/JVM%E7%AF%87%E2%80%94%E2%80%94JVM%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0%E3%80%81%E8%AF%8A%E6%96%AD%E5%B7%A5%E5%85%B7%E4%B8%8EGC%E8%B0%83%E4%BC%98.md)（TODO）
 
 ## 环境安装篇
 
