@@ -1,0 +1,141 @@
+## JVM篇——JVM启动参数
+
+
+
+### 1、JVM的启动参数
+
+JVM启动参数格式：
+
+- 以-开头：标准参数
+
+- -D：设置系统属性
+- -X开头：非标准参数
+- -XX开头：非稳定参数，专门用于控制JVM的行为
+  - -XX：+/-Flags，+-是对布尔值进行开关
+  - -XX:key=value形式，指定某个选项的值
+
+JVM启动参数类型
+
+- 系统属性参数
+- 运行模式参数
+- 堆内存设置参数
+- GC设置参数
+- 分析诊断参数
+- JavaAgent参数
+
+
+
+### 2、JVM常用命令工具
+
+- java
+
+  - 启动java应用
+
+- javac
+
+  - 作用：编译Java程序
+
+- javap
+
+  - 作用：反编译class文件
+
+- jps/jinfo
+
+  - 作用：查看Java进程
+
+  <img src="../../../../Library/Application Support/typora-user-images/image-20210111222413616.png" alt="image-20210111222413616" style="zoom:50%;" />
+
+- jstat
+
+  - 查看JVM内部GC信息
+
+  <img src="../../../../Library/Application Support/typora-user-images/image-20210111222441524.png" alt="image-20210111222441524" style="zoom:50%;" />
+
+  SOC：0号存活区的当前容量
+
+  S1C：1号存活区的当前容量
+
+  S0U：0号存活区的使用量
+
+  S1U：1号存活区的使用量
+
+  EC：Eden区的当前容量
+
+  EU：Eden区的使用量
+
+  OC：老年区的当前容量
+
+  OU：老年代的使用量
+
+  MC：元数据区的当前容量
+
+  MU：元数据区的使用量
+
+  CCSC：压缩的class空间容量
+
+  CCSU：压缩的class空间使用量
+
+  YGC：年轻代GC的次数
+
+  YGCT：年轻代GC的总耗时
+
+  FGC：老年代GC的次数
+
+  FGCT：老年代GC的总耗时
+
+  GCT：垃圾回收的总耗时=YGCT+FGCT
+
+  <img src="../../../../Library/Application Support/typora-user-images/image-20210111223541797.png" alt="image-20210111223541797" style="zoom:50%;" />
+
+  使用jstat -gcutil pid呈现的结果就是百分比。
+
+- jmap
+
+  - 查看Java堆或类占用的信息
+
+  <img src="../../../../Library/Application Support/typora-user-images/image-20210111224317011.png" alt="image-20210111224317011" style="zoom:50%;" />
+
+  -heap：查看堆内存信息
+
+  -histo：查看类的内存
+
+- jstack
+
+  - 查看线程信息
+
+- jcmd
+
+  - 执行JVM相关命令
+
+- jrunscript/jjs
+
+
+
+### 3、JVM图形化工具
+
+
+
+#### 3.1 jconsole
+
+在命令行中输入jconsole启动：
+
+<img src="../../../../Library/Application Support/typora-user-images/image-20210111231624361.png" alt="image-20210111231624361" style="zoom:50%;" />
+
+
+
+
+
+#### 3.2 VisualVM
+
+在命令行中输入jvisualvm启动：
+
+<img src="../../../../Library/Application Support/typora-user-images/image-20210111231427652.png" alt="image-20210111231427652" style="zoom:50%;" />
+
+
+
+#### 3.3 Java mission controll
+
+在命令行中输入jmc启动：
+
+
+
