@@ -35,9 +35,9 @@
 
 3、[JVM篇——字节码、类加载器和JVM内存模型](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/JVM%E7%B3%BB%E5%88%97/JVM%E7%AF%87%E2%80%94%E2%80%94%E5%AD%97%E8%8A%82%E7%A0%81%E3%80%81%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8.md)(DOING)
 
-4、[JVM篇——JVM启动参数、诊断工具](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/JVM%E7%B3%BB%E5%88%97/JVM%E7%AF%87%E2%80%94%E2%80%94JVM%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0%E3%80%81%E8%AF%8A%E6%96%AD%E5%B7%A5%E5%85%B7%E4%B8%8EGC%E8%B0%83%E4%BC%98.md)（TODO）
+4、[JVM篇——JVM启动参数、诊断工具](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/JVM%E7%B3%BB%E5%88%97/JVM%E7%AF%87%E2%80%94%E2%80%94JVM%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0%E3%80%81%E8%AF%8A%E6%96%AD%E5%B7%A5%E5%85%B7)（TODO）
 
-5、JVM篇——垃圾回收与调优
+5、[JVM篇——垃圾回收与调优](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/JVM%E7%B3%BB%E5%88%97/JVM%E7%AF%87%E2%80%94%E2%80%94%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E5%8F%8A%E8%B0%83%E4%BC%98.md)（TODO）
 
 ## 环境安装篇
 
