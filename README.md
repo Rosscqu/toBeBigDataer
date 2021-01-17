@@ -25,7 +25,11 @@
 
 ### 多线程篇
 
+1、[Java多线程篇——线程基础](https://github.com/Rosscqu/toBeBigDataer/blob/master/1%E3%80%81Java%E7%AF%87/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%B3%BB%E5%88%97/java%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%AF%87%E2%80%94%E2%80%94%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%9F%BA%E7%A1%80.md)
 
+2、Java多线程篇——volatile和synchronized关键字（TODO）
+
+3、Java多线程篇——线程池（TODO）
 
 ### JVM篇
 
