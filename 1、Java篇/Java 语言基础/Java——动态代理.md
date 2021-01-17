@@ -47,6 +47,7 @@ public class StaticProxyDemo {
     }
 
     public static void main(String[] args) {
+        System.getProperties().put("sun.misc.ProxyGenerator.saveGeneratedFiles", "true"); //设置系统属性
         IService service = new RealService();
         IService proxyService = new ProxyService(service);
         proxyService.sayHello();
@@ -146,11 +147,49 @@ public class JDKDynamicProxyDemo {
 
 ##### 2.3.2 cglib动态代理
 
+添加maven依赖：
 
+```xml
+<dependency>
+    <groupId>cglib</groupId>
+    <artifactId>cglib</artifactId>
+    <version>3.3.0</version>
+</dependency>
+```
+
+基于cglib的简单实现：
+
+```java
+public class CGLibProxy implements MethodInterceptor {
+    private Object obj;
+
+    public CGLibProxy(Object obj) {
+        this.obj = obj;
+    }
+
+    public Object createProxy() {
+        Object realObj = Enhancer.create(obj.getClass(), this);
+        return realObj;
+    }
+
+    @Override
+    public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
+        System.out.println("代理前");
+        Object res = methodProxy.invokeSuper(o, objects);
+        System.out.println("代理后");
+        return res;
+    }
+
+    public static void main(String[] args) {
+        System.setProperty(DebuggingClassWriter.DEBUG_LOCATION_PROPERTY, "java_workapace/");
+        UserDaoImpl userDao = new UserDaoImpl();
+        UserDaoImpl proxy = (UserDaoImpl) new CGLibProxy(userDao).createProxy();
+        proxy.getAge("a");
+    }
+}
+```
 
 
 
 ### 3 利用动态代理实现AOP
-
-
 
