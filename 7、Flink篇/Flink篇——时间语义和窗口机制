@@ -1,0 +1,537 @@
+## Flink篇——时间语义和窗口机制
+
+
+
+### 1、时间类型
+
+Flink定义里3中时间类型：事件时间、处理时间、摄入时间。
+
+1）事件时间
+
+事件时间是指事件发生的时间，一般是数据源端数据生成的时间。例如在日志处理中，事件时间就是日志中的时间戳。通过事件时间能够还原事件发生的顺序。
+
+Flink中使用TimeCharacteristic设置事件时间：
+
+```java
+StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
+```
+
+使用事件时间时，还需要从每一条数据中提取时间，如果要处理时间乱序问题，还需要设置Watermark（稍后介绍）。
+
+2）处理时间
+
+处理时间指消息被计算引擎处理的时间，以各个计算节点的本地时间为准。
+
+Flink默认的时间语义是处理时间，也可以再手动设置：
+
+```java
+StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+env.setStreamTimeCharacteristic(TimeCharacteristic.ProcessingTime);
+```
+
+处理时间的缺点：使用处理时间依赖于操作系统的时钟，重复执行基于窗口的统计作业，结果可能是不同的。
+
+处理时间的优点：计算逻辑简单，性能好于事件时间，延迟低于事件时间，只需要获取当前系统的时间戳。
+
+3）摄入时间
+
+摄入时间指事件进入流处理系统的时间，即数据被读取的那一刻时间戳作为摄入时间。
+
+Flink中设置摄入时间：
+
+```java
+StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+env.setStreamTimeCharacteristic(TimeCharacteristic.IngestionTime);
+```
+
+摄入时间也依赖于操作系统的时间，但是在处理机制上与事件时间类似，在作业异常重启执行的时候，无法避免使用处理时间的结果不准确的问题。
+
+应用场景：若在数据记录中没有记录时间，又想使用事件时间机制来处理时间，可以选择摄入时间。
+
+
+
+### 2、窗口计算
+
+Flink DataStream API将窗口抽象成独立的Operator。针对KeyedStream使用`window()`方法，对于DataStream使用`windowAll()`方法。常见的窗口计算编程模型如下：
+
+```java
+public class WindowJob {
+
+    public static void main(String[] args) {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        DataStreamSource<String> datasource = env.socketTextStream("127.0.0.1", 8000);
+        DataStream<Tuple2<String, Integer>> map = datasource.flatMap((s, out) -> {
+            String[] strings = s.split("\\s");
+            for (String str : strings) {
+                out.collect(new Tuple2<>(str, 1));
+            }
+        });
+
+        KeyedStream<Tuple2<String, Integer>, Tuple> keyedStream = map.keyBy(0);
+
+        keyedStream.window(TumblingEventTimeWindows.of(Time.minutes(30)))  // 指定窗口类型
+                .trigger(ContinuousEventTimeTrigger.of(Time.seconds(5)))   // 指定触发器类型（可选）
+                .evictor(TimeEvictor.of(Time.seconds(5)))                  // 指定剔除器（可选）
+                .allowedLateness(Time.minutes(10))                         // 指定是否允许延迟（可选）
+                .sideOutputLateData(new OutputTag<>("a"))              // 指定侧输出
+                .reduce(new ReduceFunction<Tuple2<String, Integer>>() {    // 指定窗口计算函数
+                    @Override
+                    public Tuple2<String, Integer> reduce(Tuple2<String, Integer> stringIntegerTuple2, Tuple2<String, Integer> t1) throws Exception {
+                        return null;
+                    }
+                })
+        .getSideOutput(new OutputTag<>("a"));                           // 根据tag输出数据
+    }
+}
+```
+
+1）window方法：指定窗口类型，参数为WindowAssigner。定义如何将数据流分配到一个或多个窗口；
+
+2）trigger方法：指定窗口触发的时机，参数为Trigger。定义窗口满足什么样的条件触发计算；
+
+3）evictor方法：用于数据剔除；
+
+4）allowedLateness方法：标记是否处理迟到数据，当迟到数据到达窗口中是否触发计算。
+
+5）sideOutputLateData方法：标记输出标签，然后通过getSideOutput将窗口的数据根据标签输出；
+
+6）Window Function：定义窗口上数据处理的逻辑，例如对数据进行sum操作。
+
+
+
+**窗口原理：**
+
+1）窗口算子负责处理窗口，数据流源源不断进入算子，每一个算子进入算子时，首先会被交给WindowAssigner。
+
+2）WindowAssigner决定元素被放在哪个或哪些窗口，在这个过程可能会创建新的窗口或者合并旧的窗口；Window本身只是一个ID标识符，其内部可能存储了一些元数据，例如TimeWindow中有开始时间和结束时间，但是并不会存储窗口的元素。窗口中的元素实际存储在Key/value state中，key是Window，value为数据集合或聚合值；
+
+3）每个窗口都拥有一个属于自己的Trigger，Trigger上有定时器，用于决定一个窗口何时能够被计算或清除。当有元素被分配到该窗口或者之前注册的定时器超时，trigger都会被调用；
+
+4）Trigger被触发后，如果有Evictor：窗口中的元素集合会被交给Evictor，Evictor主要遍历窗口中的元素列表，并决定最新进入窗口的多少个元素需要被移除，剩余的元素会交给用户指定函数进行窗口的计算；如果没有Evictor：直接将数据发送到计算函数；
+
+5）计算函数收到窗口的元素，计算出窗口的结果值，并发送给下游。Flink对聚合类的窗口计算做了优化，每个进入窗口的元素执行一次聚合函数并修改中间结果值，这样可以大大降低内存的消耗并提升性能。但是如果用户定义了Evictor则不会启用对聚合窗口的优化。
+
+**处理过程如下：**
+
+<img src="img/窗口机制运行流程.png" alt="image-20210124173550726" style="zoom:50%;" />
+
+#### 2.1 WindowAssigner（窗口类型）
+
+Flink提供的窗口类型：计数窗口（Count Window）、时间窗口（Time Window）和会话窗口（Session Window）。
+
+<img src="img/WindowAssigner类体系.png" alt="image-20210123231609936" style="zoom:50%;" />
+
+##### 2.1.1 计数窗口
+
+计数窗口是将累积固定个数的元素视为一个窗口，每超过一定个数则产生一个新的窗口。
+
+计数窗口分为滚动计数窗口和滑动计数窗口。Flink提供方便的API：countWindow来实现，例如：
+
+```java
+public class CountWindowJob {
+
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
+        DataStreamSource<String> datasource = env.socketTextStream("127.0.0.1", 8000);
+        DataStream<Tuple2<String, Integer>> map = datasource.flatMap((s, out) -> {
+            String[] strings = s.split("\\s");
+            for (String str : strings) {
+                out.collect(new Tuple2<>(str, 1));
+            }
+        });
+
+        KeyedStream<Tuple2<String, Integer>, Tuple> keyedStream = map.keyBy(0);
+
+        // 滚动计数窗口
+        DataStream<Tuple2<String, Integer>> tumbleSum = keyedStream
+                .countWindow(10)
+                .sum(1);
+
+        // 滑动计数窗口
+        DataStream<Tuple2<String, Integer>> slideSum = keyedStream
+                .countWindow(10,2)
+                .sum(1);
+
+        env.execute("countWindow");
+    }
+}
+```
+
+计数窗口无法像时间窗口一样事先切分好。
+
+
+
+##### 2.1.2 时间窗口
+
+时间窗口按照事先约定的窗口大小切分的窗口。根据窗口是否重叠，又可以分成滚动时间窗口和滑动时间窗口。滚动时间窗口之间不会重叠，而滑动时间窗口会存在相互重叠的情况。
+
+在实践中，既可以使用`window()`方法，也可以使用更抽象的`timeWindow()`方法。
+
+```java
+public class TimeWindowJob {
+
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
+        DataStreamSource<String> datasource = env.socketTextStream("127.0.0.1", 8000);
+        DataStream<Tuple2<String, Integer>> map = datasource.flatMap((s, out) -> {
+            String[] strings = s.split("\\s");
+            for (String str : strings) {
+                out.collect(new Tuple2<>(str, 1));
+            }
+        });
+
+        KeyedStream<Tuple2<String, Integer>, Tuple> keyedStream = map.keyBy(0);
+
+        // 滚动时间窗口，根据设置的时间语义一致
+        DataStream<Tuple2<String, Integer>> tumbleSum = keyedStream
+                .timeWindow(Time.minutes(10))
+                .sum(1);
+
+        // 滚动时间窗口，处理时间
+        DataStream<Tuple2<String, Integer>> tumbleProcessSum = keyedStream
+                .window(TumblingProcessingTimeWindows.of(Time.minutes(10)))
+                .sum(1);
+
+        // 滚动时间窗口，事件时间
+        DataStream<Tuple2<String, Integer>> tumbleEventSum = keyedStream
+                .window(TumblingEventTimeWindows.of(Time.minutes(10)))
+                .sum(1);
+
+        // 滑动时间窗口，根据设置的时间语义一致
+        DataStream<Tuple2<String, Integer>> slideSum = keyedStream
+                .timeWindow(Time.minutes(10), Time.minutes(1))
+                .sum(1);
+
+        // 滑动时间窗口，处理时间
+        DataStream<Tuple2<String, Integer>> slideProcessSum = keyedStream
+                .window(SlidingProcessingTimeWindows.of(Time.minutes(10), Time.minutes(1)))
+                .sum(1);
+
+        // 滑动时间窗口，事件时间
+        DataStream<Tuple2<String, Integer>> slideEventSum = keyedStream
+                .window(SlidingEventTimeWindows.of(Time.minutes(10), Time.minutes(1)))
+                .sum(1);
+        
+        env.execute();
+    }
+}
+```
+
+##### 2.1.3 会话窗口
+
+Session window是一种特殊的窗口，当超过一段时间后，窗口没有收到新的数据元素则视为窗口结束。所以事先无法确定窗口的长度、元素个数，窗口之间也不会相互重叠。
+
+Flink提供4种会话窗口：
+
+1）ProcessingTimeSessionWindows：处理时间会话窗口，使用固定会话间隔时长；
+
+2）DynamicProcessingTimeSessionWindows：处理时间会话窗口，使用自定义会话间隔时长；
+
+3）EventTimeSessionWindows：事件时间会话窗口，使用固定会话间隔时长；
+
+4）DynamincEventTimeSessionWindows：事件时间会话窗口，使用自定义会话间隔时长。
+
+```java
+public class SessionWindowJob {
+
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        DataStreamSource<String> datasource = env.socketTextStream("127.0.0.1", 8000);
+
+        DataStream<Tuple2<String, Integer>> map = datasource.flatMap((s, out) -> {
+            String[] strings = s.split("\\s");
+            for (String str : strings) {
+                out.collect(new Tuple2<>(str, 1));
+            }
+        });
+
+        KeyedStream<Tuple2<String, Integer>, Tuple> keyedStream = map.keyBy(0);
+
+        // 事件时间固定会话窗口
+        DataStream<Tuple2<String, Integer>> eventSessionFixedSum = keyedStream
+                .window(EventTimeSessionWindows.withGap(Time.minutes(10)))
+                .sum(1);
+
+        // 事件时间动态会话窗口
+        DataStream<Tuple2<String, Integer>> eventSessionDynamicSum = keyedStream
+                .window(EventTimeSessionWindows.withDynamicGap((element) -> {
+                    return System.currentTimeMillis();
+                }))
+                .sum(1);
+
+        // 处理时间固定会话窗口
+        DataStream<Tuple2<String, Integer>> processSessionFixedSum = keyedStream
+                .window(ProcessingTimeSessionWindows.withGap(Time.minutes(10)))
+                .sum(1);
+
+        // 处理时间动态会话窗口
+        DataStream<Tuple2<String, Integer>> processSessionDynamicSum = keyedStream
+                .window(ProcessingTimeSessionWindows.withDynamicGap((element) -> {
+                    return System.currentTimeMillis();
+                }))
+                .sum(1);
+        
+        env.execute();
+    }
+}
+```
+
+会话窗口不同于时间窗口，它的切分依赖于事件的行为。所以很多情况下会因为事件乱序使得原本相互独立的窗口因为新事件的到来导致窗口重叠，而必须进行窗口合并。窗口合并设计3个要素：
+
+- 窗口对象的合并和清理；
+- 窗口state的合并和清理；
+- 窗口触发器的合并和清理
+
+#### 2.2 WindowTrigger
+
+Trigger触发器决定一个窗口何时能够计算或清除，每个窗口都拥有一个属于自己的Trigger，Trigger上有定时器，用来决定一个窗口何时能够被计算或清除。
+
+<img src="img/WindowTrigger类体系.png" alt="image-20210124101920864" style="zoom:50%;" />
+
+
+
+Trigger定义了3中典型的延迟计算：
+
+1）基于数据记录个数的触发：等待Window中的数据达到一定个数则触发窗口的计算，例如CountTrigger；
+
+2）基于处理时间的触发：在处理时间维度判断哪些窗口需要触发，例如ProcessTimeTrigger；
+
+3）基于事件时间的触发：使用WaterMark机制触发。
+
+```java
+public abstract class Trigger<T, W extends Window> implements Serializable {
+
+   private static final long serialVersionUID = -4104633972991191369L;
+
+   /**
+    * 每个数据会被加入窗口并调用该方法，调用的结果决定该窗口是否被计算
+    * @param element The element that arrived.
+    * @param timestamp The timestamp of the element that arrived.
+    * @param window The window to which the element is being added.
+    * @param ctx A context object that can be used to register timer callbacks.
+    */
+   public abstract TriggerResult onElement(T element, long timestamp, W window, TriggerContext ctx) throws Exception;
+
+   /**
+    * 当使用处理时间定时器时调用
+    * @param time The timestamp at which the timer fired.
+    * @param window The window for which the timer fired.
+    * @param ctx A context object that can be used to register timer callbacks.
+    */
+   public abstract TriggerResult onProcessingTime(long time, W window, TriggerContext ctx) throws Exception;
+
+   /**
+    * 当使用事件时间定时器调用
+    * @param time The timestamp at which the timer fired.
+    * @param window The window for which the timer fired.
+    * @param ctx A context object that can be used to register timer callbacks.
+    */
+   public abstract TriggerResult onEventTime(long time, W window, TriggerContext ctx) throws Exception;
+
+   /**
+    * 判断trigger是否可以合并
+    */
+   public boolean canMerge() {
+      return false;
+   }
+
+   /**
+    * 窗口合并，合并触发器
+    * @param window The new window that results from the merge.
+    * @param ctx A context object that can be used to register timer callbacks and access state.
+    */
+   public void onMerge(W window, OnMergeContext ctx) throws Exception {
+      throw new UnsupportedOperationException("This trigger does not support merging.");
+   }
+
+   /**
+    * window销毁的时候清理Trigger
+    */
+   public abstract void clear(W window, TriggerContext ctx) throws Exception;
+
+}
+```
+
+Trigger触发的结果如下：
+
+```java
+public enum TriggerResult {
+
+  // 继续，不做任何操作；
+   CONTINUE(false, false),
+
+  // 触发计算输出窗口结果+清理，处理数据并移除窗口和窗口中的数据。
+   FIRE_AND_PURGE(true, true),
+
+  // 触发窗口计算，不清除窗口
+   FIRE(true, false),
+
+  // 不计算窗口，窗口中所有元素都被清除
+   PURGE(false, true);
+
+   private final boolean fire;
+   private final boolean purge;
+
+   TriggerResult(boolean fire, boolean purge) {
+      this.purge = purge;
+      this.fire = fire;
+   }
+
+   public boolean isFire() {
+      return fire;
+   }
+
+   public boolean isPurge() {
+      return purge;
+   }
+}
+```
+
+当数据流到时，调用Trigger判断是否需要触发计算，如果调用结果是Fire，则计算窗口并保留窗口原样，窗口中的数据不清理，数据保持不变，等待下次触发计算的时候再次执行计算。
+
+ 
+
+#### 2.3 Evictor
+
+Evictor可在Window Function执行前或后，从WIndow中过滤元素。
+
+<img src="img/WindowEvictor类体系.png" alt="image-20210124104203819" style="zoom:50%;" />
+
+Flink内置了3中窗口数据过滤器：
+
+1）CountEvictor：计数过滤器。window中保留指定数量的元素，并从窗口头部开始丢弃其余元素；
+
+2）DeltaEvictor：阈值过滤器。本质上是个自定义规则，计算窗口中每个数据记录，然后与一个事先定义好的阈值做比较，丢弃超过阈值的数据记录；
+
+3）TimeEvictor：时间过滤器。保留window中最近一段时间内的元素，并丢弃其余元素。
+
+
+
+#### 2.4 window Funtion函数
+
+
+
+##### 2.4.1 增量计算函数
+
+增量聚合指窗口保存一份state数据，每流入一个新元素，新元素都会与state数据进行聚合，更新state数据，在保存到窗口中。例如：
+
+```java
+public SingleOutputStreamOperator<T> reduce(ReduceFunction<T> function)
+
+// 已弃用
+public <R> SingleOutputStreamOperator<R> fold(R initialValue, FoldFunction<T, R> function)
+
+public <ACC, R> SingleOutputStreamOperator<R> aggregate(AggregateFunction<T, ACC, R> function)
+```
+
+增量计算的优点：数据到达后立即计算，窗口只保存中间数据，计算效率高；
+
+增量计算的缺点：计算模式是事先确定的，能满足大部分的计算需求，对于特殊业务需求可能无法满足。
+
+##### 2.4.2 全量计算函数
+
+全量计算指的是先缓存该窗口的所有元素，等到触发条件后对窗口中的所有元素执行计算。例如：
+
+```
+public <R> SingleOutputStreamOperator<R> process(ProcessWindowFunction<T, R, K, W> function)
+```
+
+全量计算的优点：计算实现更加灵活；
+
+全量计算的缺点：计算效率更慢，占用内存更多。
+
+
+
+### 3、水印Watermark
+
+水印（Watermark）是一种衡量event time进展的机制，可以设定延迟触发。watermark本质上就是事件时间，代表当前事件时间的进展。如果系统中出现watermark T，那么意味着eventTime<T的数据都已经到达，窗口的结束时间和T相同的那个窗口被触发进行计算。
+
+水印的作用：结合窗口机制可以处理数据乱序问题。从数据源产生数据到Flink读取和处理到数据，在这个过程中，会受到网络延迟、背压、Failover、分布式等原因导致数据乱序。所以当时间语义为事件时间，需要等待窗口[window_start, window_end)数据到齐后才能计算，这时就需要利用水印机制来衡量当前事件的进展，不然会无休止的等待下去。当watermark>=window_end时，就会触发窗口计算并关闭窗口。
+
+水印的特点有：
+
+- watermark是一条特殊的数据记录；
+- Watermark必须单调递增，以确保任务的事件时间向前推进；
+- 与数据时间戳相关
+
+
+
+#### 3.1 watermark的生成
+
+watermark生成的时机既可以在数据源端生成，也可以在DataStream的API中生成。
+
+##### 3.1.1 数据源端生成watermark
+
+watermark在Source Function中生成，如果是并行的计算任务，那么多个并行执行的source function中，相互独立产生各自的watermark。
+
+```java
+public class SourceFunctionWithWatermark implements SourceFunction<MyType> {
+
+    private boolean flag = true;
+    private Watermark watermark;
+
+    @Override
+    public void run(SourceContext<MyType> ctx) throws Exception {
+        while (flag) {
+            MyType element = getNext();
+            
+            // 为元素分配时间戳
+            ctx.collectWithTimestamp(element, element.getTimestamp());
+
+            if (watermark == null || (watermark != null && watermark.getTimestamp() <= element.getTimestamp())) {
+                watermark = new Watermark(element.getTimestamp());
+                // 生成watermark
+                ctx.emitWatermark(watermark);
+            }
+            Thread.sleep(100);
+        }
+
+    }
+
+    @Override
+    public void cancel() {
+        flag = false;
+    }
+
+  // 生成数据
+    private MyType getNext() {
+        MyType myType = new MyType();
+        Random random = new Random();
+
+        myType.setValue(String.valueOf(random.nextInt(1000)));
+        myType.setTimestamp(System.currentTimeMillis());
+
+        return myType;
+    }
+}
+```
+
+##### 3.1.2 DataStream API生成watermark
+
+DataStream API中使用的是`assignTimestampsAndWatermarks()`方法提取watermark，该方法的参数接口WatermarkStrategy生成WatermarkGenerator，然后通过WatermarkGenerator生成水印：
+
+![image-20210124165040901](img/WindowStrategy类体系.png)
+
+水印产生常用的策略有：
+
+1）BoundedOutOfOrdernessWatermarks：固定延迟watermark，watermark=当前受到的数据最大时间戳-固定延迟；
+
+2）AscendingTimestampsWatermarks：水印是周期性生成的，紧跟数据中最新的时间戳。该策略引入的延迟主要是产生水印的周期间隔，可以通过`setAutoWatermarkInterval(long)`方法设置；
+
+#### 3.2 多流watermark的处理机制
+
+**多Source场景**
+
+一个作业中有多个Source的数据，对Source的数据进行groupBy分组，那么来自不同的Source的相同key会shuffle到同一个处理节点，并携带各自的watermark，watermark的大小不相同；
+
+场景2:Flink中每个作业运行一个或一组算子实例，Task在生成watermark时相互独立，所以作业中村子存在并行的watermark。每个task计算速率不同，watermark的大小也不相同。
+
+解决方案：因为watermark需要保持单调递增，当出现多流携带EventTime汇聚到一起时，Flink会选择所有流入的Eventtime中最小的一个向下游流出，从而保证watermark的单调递增和数据的完整性
+
+**watermark更新**
+
+双流watermark处理中，无论哪一个流的watermark进入算子，都需要跟另一个流的当前算子进行比较，选择较小的watermark，即min(input1_watermark, input2_watermark)，与当前的watermark比较，如果新的watermark大于算子的当前watermark，则更新算子的watermark为其新watermark，并发送给下游算子。
+
