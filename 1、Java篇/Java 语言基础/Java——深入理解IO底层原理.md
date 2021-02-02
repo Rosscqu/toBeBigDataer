@@ -106,7 +106,33 @@ AIO的基本流程是：用户线程通过系统调用，向内核注册某个IO
 
 ### 3、Java IO
 
+Java IO类库非常庞大和复杂，有几十个类，负责IO数据的读取和写入。Java IO可以从两个维度划分：
 
+<img src="../img/Java IO分类.png" alt="image-20210202220315359" style="zoom:50%;" />
+
+针对不同的场景，Java IO又在这四个类基础上扩展出很多子类。Java BIO体系如下：
+
+<img src="../img/Java BIO体系.png" alt="image-20210202215445028" style="zoom:50%;" />
+
+节点流直接处理数据源介质，处理流使用**装饰器模式**，对节点流功能的增强。例如BufferedInputStream对流增加缓存功能，DataInputStream是将原始数据流转换为基本数据类型的流。
+
+```java
+public class InputStreamDemo {
+
+    public static void main(String[] args) throws IOException {
+        FileInputStream file = new FileInputStream("test.txt");
+        BufferedInputStream bufferedInputStream = new BufferedInputStream(file);
+
+        int length = -1;
+        byte[] bytes = new byte[48];
+
+        while ((length = bufferedInputStream.read(bytes)) != -1) {
+            System.out.println("read length is " + length);
+            System.out.println(new String(bytes));
+        }
+    }
+}
+```
 
 
 
@@ -471,8 +497,6 @@ buffer.clear();
 
 下面分别介绍这三个步骤。
 
-
-
 1）获取选择器实例
 
 选择器实例是通过调用静态工厂方法open()来获取
@@ -483,6 +507,8 @@ Selector selector = Selector.open();
 ```
 
 Selector选择器的open()方法是向选择器SPI发出请求，通过默认的SelectorProvider（选择器提供者）对象，获取一个新的选择器实例。
+
+Java SPI全称服务提供者接口，是JDK的一种可以扩展的服务提供和发现机制。Java通过SPI的方式，提供选择器的默认实现版本。
 
 2）将通道注册到选择器中
 
@@ -513,6 +539,8 @@ IO事件不是对通道的IO操作，而是通道的某个IO操作的一种就�
 - 有数据可读的SocketChannel通道，处于读就绪状态；
 - 等待写入数据的SocketChannel，处于写就绪状态。
 
+注意：注册到选择器的通道，必须处于非阻塞模式，否则将抛出IllegalBlockingModeException异常。这意味着FileChannel文件通道不能与选择器一起使用，因为FileChannel文件通道只有阻塞模式，而Socket套接字相关的所有通道都可以。
+
 3）选择感兴趣的IO就绪事件
 
 通过Selector选择器的select()方法，选出已经注册、已经就绪的IO事件，保存到SelectionKey选择键集合中。SelectionKey集合保存在选择器实例内部，是一个元素为SelectionKey类型的集合，调用选择器的selectedKeys()方法，可以取得选择键集合。
@@ -542,14 +570,6 @@ while (selector.select() > 0) {
 ```
 
 
-
-#### 4.4 综合案例
-
-需求：
-
-服务器功能：接收客户端传入的文件。
-
-客户端功能：传入文件到服务器端。
 
 
 

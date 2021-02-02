@@ -1,12 +1,40 @@
 ## Flink篇——作业提交流程
 
+### 1、作业提交流程概览
+
+
+
+#### 1.1 作业提交流程概览
+
 Flink的作业提交流程如下：
 
 <img src="img/作业提交流程.png" alt="image-20201223215819027" style="zoom:50%;" />
 
 
 
-### 1、Flink核心抽象
+#### 1.2 Graph概览
+
+Flink的流计算和批处理采用不同的抽象，批处理使用OptimizePlan来做Batch相关的优化，使用StreamGraph表达流计算的逻辑，最终都转换为JobGraph实现流批的统一。
+
+<img src="img/Graph与API层次关系.png" alt="image-20210131174407253" style="zoom:50%;" />
+
+流计算应用的Graph转换流程为：
+
+1）首先将DataStream API的调用转换为Transformation;
+
+2）经过StreamGraph—>JobGraph—>ExecutionGraph三层转换；
+
+3）经过Flink调度执行，在Flink集群中启动计算任务，形成物理执行图。
+
+
+
+### 2、作业入口
+
+
+
+
+
+### 3、Flink 应用程序流程
 
 Flink的编程模型为：
 
@@ -52,7 +80,9 @@ public class StreamingJob {
 }
 ```
 
-#### 1.1 执行环境
+#### 
+
+#### 3.1 Flink作业执行环境
 
 对于每个Flink任务，首先要创建作业的执行环境。执行环境是Flink作业开发、执行的入口。目前Flink还具有流计算和批处理两套执行环境。执行环境的类体系如下：
 
@@ -105,21 +135,17 @@ StreamExecutionEnvironment表示流计算作业的执行环境，是作业开发
 - 校验部署模式，目前仅支持attached模式
 - 上传每个作业需要的Jar文件
 
+#### 3.2 StreamGraph生成
 
-
-#### 1.2 数据流元素
-
-
-
-#### 1.3 数据转换Transformation
+##### 3.2.1 StreamGraph核心抽象
 
 
 
 
 
+##### 3.2.2 StreamGraph生成过程
 
 
-### 2、StreamGraph流图
 
 使用DataStream API开发的应用程序，在运行时刻DtaStream的API调用都会转换为Transformation。WordCount的transformation为：
 
@@ -156,13 +182,23 @@ private StreamGraphGenerator getStreamGraphGenerator() {
 
 
 
-### 3、JobGraph作业图
+#### 3.3 JobGraph生成
 
 JobGraph可以由StreamGraph和OptimizePlan转换而来。在流计算中，在StreamGraph的基础上进行一些优化，例如通过OperatorChain机制将算子合并起来，在执行时，调度在同一个task线程上，避免数据的线程跨线程、跨网络的传递。
 
 
 
-### 4、ExecutionGraph执行图
+
+
+### 4、JobGraph提交集群
+
+
+
+#### 4.1 提交方法
+
+
+
+#### 4.2 ExecutionGraph生成
 
 ExecutionGraph是调度Flink作业执行的核心数据结构，包含作业中所有并行执行的task信息、task之间的关联关系、数据流转关系。
 
@@ -171,10 +207,4 @@ JobGraph到ExecutionGraph的转换在JobMaster中完成，转换过程中的变�
 1）加入并行度的概念，并成为真正可调度的图结构；
 
 2）JobVertex转换为ExecutionJobVertex和ExecutionVertex，Intermediate Dataset转换为IntermediateResult和IntermediateResultPartition等，通过并行将这些类实现。
-
-
-
-
-
-
 
