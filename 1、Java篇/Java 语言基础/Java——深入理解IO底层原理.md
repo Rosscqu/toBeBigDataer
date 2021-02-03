@@ -571,5 +571,99 @@ while (selector.select() > 0) {
 
 
 
+#### 4.4 丢弃服务器
 
+功能：仅仅读取客户端通道的输入数据，读取完成后直接关闭客户端通道；并且读取到的数据直接丢弃。
+
+服务端：
+
+```java
+public class DiscardServer {
+
+    public static void main(String[] args) throws IOException {
+        startServer();
+    }
+
+    public static void startServer() throws IOException {
+        // 1、获取选择器
+        Selector selector = Selector.open();
+
+        // 2、获取通道
+        ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+
+        // 3、设置为非阻塞
+        serverSocketChannel.configureBlocking(false);
+        // 4、绑定连接
+        serverSocketChannel.bind(new InetSocketAddress("127.0.0.1", 8000));
+        // 5、将通道注册为"接收新连接"的IO事件，注册到选择器
+        serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+
+        // 6、轮询感兴趣的IO就绪事件
+        while (selector.select() > 0) {
+            // 7、获取选择键
+            Set<SelectionKey> keySet = selector.selectedKeys();
+            Iterator<SelectionKey> iterator = keySet.iterator();
+
+            while (iterator.hasNext()) {
+                // 8、获取单个键并处理
+                SelectionKey key = iterator.next();
+
+                // 9、判断key具体是什么事件
+                if (key.isAcceptable()) {
+                    // 10、如果是acceptable事件，获取客户端连接
+                    SocketChannel socketChannel = serverSocketChannel.accept();
+                    socketChannel.configureBlocking(false);
+                    // 11、将新连接的通道注册为可读事件
+                    socketChannel.register(selector, SelectionKey.OP_READ);
+
+                } else if (key.isReadable()) {
+                    // 12、若选择器是可读事件，读取数据
+                    SocketChannel socketChannel = (SocketChannel) key.channel();
+
+                    ByteBuffer buffer = ByteBuffer.allocate(48);
+                    int length = 0;
+
+                    // 13、读取数据，然后丢弃
+                    while ((length = socketChannel.read(buffer)) > 0) {
+                        buffer.flip();
+                        System.out.println("input is " + new String(buffer.array()));
+                        buffer.compact();
+                    }
+                    socketChannel.close();
+                }
+
+                iterator.remove();
+            }
+        }
+
+        serverSocketChannel.close();
+    }
+}
+```
+
+
+
+客户端：
+
+```java
+public class DiscardClient {
+
+    public static void main(String[] args) throws IOException {
+        SocketChannel socketChannel = SocketChannel.open(new InetSocketAddress("127.0.0.1", 8000));
+        socketChannel.configureBlocking(false);
+
+        while (!socketChannel.finishConnect()) {
+        }
+
+        ByteBuffer buffer = ByteBuffer.allocate(48);
+        buffer.put("hello world".getBytes());
+        buffer.flip();
+
+        socketChannel.write(buffer);
+        socketChannel.shutdownOutput();
+        socketChannel.close();
+
+    }
+}
+```
 
